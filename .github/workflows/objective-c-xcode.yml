@@ -8,23 +8,57 @@ on:
 
 jobs:
   build:
-    name: Build and analyse default scheme using xcodebuild command
-    runs-on: macos-latest
+    name: Build for iOS # GitHubに表示されるジョブの名前
+    runs-on: macos-latest # ジョブを実行するマシーンの種類
 
-    steps:
-      - name: Checkout
+    steps: #一連のタスク
+
+      # チェックアウト
+      - name: Checks-out my repository # step に名前をつけられる なくてもいい
         uses: actions/checkout@v2
-      - name: Set Default Scheme
-        run: |
-          scheme_list=$(xcodebuild -list -json | tr -d "\n")
-          default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
-          echo $default | cat >default
-          echo Using default scheme: $default
-      - name: Build
-        env:
-          scheme: ${{ 'default' }}
-        run: |
-          if [ $scheme = default ]; then scheme=$(cat default); fi
-          if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then filetype_parameter="workspace" && file_to_build="`ls -A | grep -i \\.xcworkspace\$`"; else filetype_parameter="project" && file_to_build="`ls -A | grep -i \\.xcodeproj\$`"; fi
-          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
-          xcodebuild clean build analyze -scheme "$scheme" -"$filetype_parameter" "$file_to_build" | xcpretty && exit ${PIPESTATUS[0]}
+      
+      # Xcode 13.2.1 を使う
+      - name: Select Xcode version 
+        run: sudo xcode-select -s '/Applications/Xcode_13.2.1.app/Contents/Developer'
+
+#      # バージョン確認
+#      - name: Show Xcode version
+#        run: xcodebuild -version
+      
+#      - name: Build # シミュレーター向けにビルド
+#        run: xcodebuild -sdk iphonesimulator -configuration Debug build
+
+      # Flutter のインストール
+      - name: Install Flutter
+        run: git clone https://github.com/flutter/flutter.git # ターミナルでこれが実行されるイメージ
+ 
+      # PATH を通す
+      - name: Add path
+        run: echo "$(pwd)/flutter/bin" >> $GITHUB_PATH # GITHUB_PATH にどんどんぶちこめばいいらしい
+ 
+      # パッケージのダウンロード
+      - name: cd
+        run: ls -la flutter
+ 
+      # パッケージのダウンロード
+      - name: Download Flutter packages
+        run: flutter pub get
+ 
+      # 証明書の生成
+      - name: Import Provisioning Profile
+        run: | # 複数行の run を書きたい場合はこうする 以下、Provisioning Profilesを置くべきディレクトリにデコードしている
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo -n ${{ secrets.PROVISIONING_PROFILE }} | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/9373ec01-333c-40a2-9fd1-03fa0509e0ac.mobileprovision
+ 
+      # 署名をする
+      - name: Import Code-Signing Certificates
+        uses: Apple-Actions/import-codesign-certs@v1 # 外部パッケージを使っている
+        with:
+          p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
+          p12-password: ${{ secrets.CERTIFICATE_PASSWORD }}
+ 
+      # ipa ファイルの出力
+      - name: Create ipa file
+        # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
+        run: flutter build ipa --export-options-plist=ExportOptions.plist #--build-number ${GITHUB_RUN_NUMBER}
+
