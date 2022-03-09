@@ -59,21 +59,21 @@ jobs:
 
 #      - run: flutter build ios
 #
-      # 頑張ってipaを出力します
-      - name: XCode Build Archive
-        uses: yukiarrr/ios-build-action@v1.1.1
-        with:
-          project-path: sample App.xcodeproj
-          p12-base64: ${{ secrets.CERTIFICATES_P12 }}
-          certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
-          mobileprovision-base64: ${{ secrets.PROVISIONING_PROFILE }}
-          code-signing-identity: ${{ secrets.CODE_SIGNING_IDENTITY }}
-          team-id: ${{ secrets.TEAM_ID }}
-          output-path: app-release.ipa
-          export-method: development
+#      # 頑張ってipaを出力します
+#      - name: XCode Build Archive
+#        uses: yukiarrr/ios-build-action@v1.1.1
+#        with:
+#          project-path: sample App.xcodeproj
+#          p12-base64: ${{ secrets.CERTIFICATES_P12 }}
+#          certificate-password: ${{ secrets.CERTIFICATE_PASSWORD }}
+#          mobileprovision-base64: ${{ secrets.PROVISIONING_PROFILE }}
+#          code-signing-identity: ${{ secrets.CODE_SIGNING_IDENTITY }}
+#          team-id: ${{ secrets.TEAM_ID }}
+#          output-path: app-release.ipa
+#          export-method: development
  
-#      # ipa ファイルの出力
-#      - name: Create ipa file
-#        # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
-#        run: flutter build ipa --export-options-plist=ExportOptions.plist --build-number ${GITHUB_RUN_NUMBER}
+      # ipa ファイルの出力
+      - name: Create ipa file
+        # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
+        run: flutter build ipa --export-options-plist=ExportOptions.plist --build-number ${GITHUB_RUN_NUMBER}
 
