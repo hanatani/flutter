@@ -28,17 +28,25 @@ jobs:
 #      - name: Build # シミュレーター向けにビルド
 #        run: xcodebuild -sdk iphonesimulator -configuration Debug build
 
-      # Flutter のインストール
-      - name: Install Flutter
-        run: git clone https://github.com/flutter/flutter.git # ターミナルでこれが実行されるイメージ
- 
-      # PATH を通す
-      - name: Add path
-        run: echo "$(pwd)/flutter/bin" >> $GITHUB_PATH # GITHUB_PATH にどんどんぶちこめばいいらしい
- 
-      # パッケージのダウンロード
-      - name: cd
-        run: ls -la flutter
+#      # Flutter のインストール
+#      - name: Install Flutter
+#        run: git clone https://github.com/flutter/flutter.git # ターミナルでこれが実行されるイメージ
+# 
+#      # PATH を通す
+#      - name: Add path
+#        run: echo "$(pwd)/flutter/bin" >> $GITHUB_PATH # GITHUB_PATH にどんどんぶちこめばいいらしい
+    
+      - name: setup cache      
+        uses: actions/cache@v1
+        with: 
+          path: /Users/runner/hostedtoolcache/flutter
+          key: ${{runner.OS}}-flutter-install-cache
+
+      - name: install flutter      
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '2.5.3'
+          channel: 'stable'
  
       # パッケージのダウンロード
       - name: Download Flutter packages
@@ -48,6 +56,7 @@ jobs:
       - name: Import Provisioning Profile
         run: | # Provisioning Profilesを置くべきディレクトリにデコードしている
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          touch ~/Library/MobileDevice/Provisioning\ Profiles/9373ec01-333c-40a2-9fd1-03fa0509e0ac.mobileprovision
           echo -n ${{ secrets.PROVISIONING_PROFILE }} | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/9373ec01-333c-40a2-9fd1-03fa0509e0ac.mobileprovision
  
       # 署名をする
@@ -56,6 +65,9 @@ jobs:
         with:
           p12-file-base64: ${{ secrets.CERTIFICATES_P12 }}
           p12-password: ${{ secrets.CERTIFICATE_PASSWORD }}
+      
+      - name: Import Export Options
+        run: echo -n '${{ secrets.EXPORT_OPTIONS }}' >> ExportOptions.plist
 
 #      - run: flutter build ios
 #
@@ -75,5 +87,5 @@ jobs:
       # ipa ファイルの出力
       - name: Create ipa file
         # GITHUB_RUN_NUMBER をビルドナンバーに指定することで被りがないようにしている。
-        run: flutter build ipa --export-options-plist=ExportOptions.plist --build-number ${GITHUB_RUN_NUMBER}
+        run: flutter build ipa --export-options-plist=ExportOptions.plist # --build-number ${GITHUB_RUN_NUMBER}
 
