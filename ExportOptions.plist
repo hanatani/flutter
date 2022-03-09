@@ -21,7 +21,7 @@
 	<true/>
 	<key>teamID</key>
 	<string>AQL7BL8QH4</string>
-	<!--<key>thinning</key>
-	<string>iPhone14,3</string>-->
+	<key>thinning</key>
+	<string>iPhone14,3</string>
 </dict>
 </plist>
